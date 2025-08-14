@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.washintontech</groupId>
+        <artifactId>exchange</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+        <relativePath>./../pom.xml</relativePath>
+    </parent>
+    <artifactId>common</artifactId>
+    <version>${project.parent.version}</version>
+    <name>common</name>
+    <description>common</description>
+    <url/>
+    <licenses>
+        <license/>
+    </licenses>
+    <developers>
+        <developer/>
+    </developers>
+    <scm>
+        <connection/>
+        <developerConnection/>
+        <tag/>
+        <url/>
+    </scm>
+    <properties>
+    </properties>
+    <dependencies>
+
+
+        <!-- Logging -->
+        <!--        <dependency>-->
+        <!--            <groupId>org.slf4j</groupId>-->
+        <!--            <artifactId>slf4j-simple</artifactId>-->
+        <!--            <version>2.0.12</version>-->
+        <!--        </dependency>-->
+
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!--            <plugin>-->
+            <!--                <groupId>org.springframework.boot</groupId>-->
+            <!--                <artifactId>spring-boot-maven-plugin</artifactId>-->
+            <!--                <configuration>-->
+            <!--                    <jvmArguments>-->
+            <!--                        &#45;&#45;add-opens java.base/java.lang.reflect=ALL-UNNAMED-->
+            <!--                        &#45;&#45;add-opens java.base/java.nio=ALL-UNNAMED-->
+            <!--                        &#45;&#45;add-opens java.base/sun.nio.ch=ALL-UNNAMED-->
+            <!--                        &#45;&#45;add-opens java.base/java.io=ALL-UNNAMED-->
+            <!--                    </jvmArguments>-->
+            <!--                </configuration>-->
+            <!--            </plugin>-->
+            <!--            <plugin>-->
+            <!--                <groupId>org.springframework.boot</groupId>-->
+            <!--                <artifactId>spring-boot-maven-plugin</artifactId>-->
+            <!--                <configuration>-->
+            <!--                    <jvmArguments>-->
+            <!--                        &#45;&#45;add-opens java.base/java.lang.reflect=ALL-UNNAMED-->
+            <!--                        &#45;&#45;add-opens java.base/java.nio=ALL-UNNAMED-->
+            <!--                        &#45;&#45;add-opens java.base/sun.nio.ch=ALL-UNNAMED-->
+            <!--                        &#45;&#45;add-opens java.base/java.io=ALL-UNNAMED-->
+            <!--                    </jvmArguments>-->
+            <!--                </configuration>-->
+            <!--            </plugin>-->
+
+            <!-- Plugin to generate FIX44 message classes -->
+            <!--            <plugin>-->
+            <!--                <groupId>org.quickfixj</groupId>-->
+            <!--                <artifactId>quickfixj-codegenerator</artifactId>-->
+            <!--                <version>2.3.2</version>-->
+            <!--                <executions>-->
+            <!--                    <execution>-->
+            <!--                        <id>generate-fix44</id>-->
+            <!--                        <phase>generate-sources</phase>-->
+            <!--                        <goals>-->
+            <!--                            <goal>generate</goal>-->
+            <!--                        </goals>-->
+            <!--                        <configuration>-->
+            <!--                            <dictFile>${project.basedir}/src/main/resources/quickfix/FIX44.xml</dictFile>-->
+            <!--                            <packaging>com.washintontech.common.quickfix.message</packaging>-->
+            <!--                            &lt;!&ndash;messagePackage>com.washintontech.common.quickfix.message</messagePackage&ndash;&gt;-->
+            <!--                            <fieldPackage>com.washintontech.common.quickfix.field</fieldPackage>-->
+            <!--                        </configuration>-->
+            <!--                    </execution>-->
+            <!--                </executions>-->
+            <!--            </plugin>-->
+
+            <!--            &lt;!&ndash; Ensure generated sources are included &ndash;&gt;-->
+            <!--            <plugin>-->
+            <!--                <artifactId>maven-compiler-plugin</artifactId>-->
+            <!--                <configuration>-->
+            <!--                    <generatedSourcesDirectory>${project.build.directory}/generated-sources/quickfixj-codegenerator-->
+            <!--                    </generatedSourcesDirectory>-->
+            <!--                </configuration>-->
+            <!--            </plugin>-->
+        </plugins>
+    </build>
+
+</project>
