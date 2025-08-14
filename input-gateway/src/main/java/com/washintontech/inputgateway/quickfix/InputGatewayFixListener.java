@@ -30,6 +30,7 @@ public class InputGatewayFixListener implements FixMessageListener {
     @Override
     public ExecutionReport onNewOrderSingle(final NewOrderSingle order, final SessionID sessionID) throws FieldNotFound {
         final var brokerId = sessionID.getTargetCompID();
+
         try {
             return inboundTraderService.processNewTradeRequest(order, Integer.parseInt(brokerId));
         } catch (Exception exception) {
