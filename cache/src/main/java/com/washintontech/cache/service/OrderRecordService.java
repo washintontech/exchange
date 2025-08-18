@@ -1,6 +1,6 @@
 package com.washintontech.cache.service;
 
-import com.washintontech.cache.model.OrderRecord;
+import com.washintontech.cache.model.OrderRecords;
 import org.springframework.stereotype.Service;
 import quickfix.FieldNotFound;
 import quickfix.fix44.ExecutionReport;
@@ -13,36 +13,39 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class OrderRecordService {
 
-    // TODO: Clear all the map post processing.
-    private ConcurrentHashMap<String, OrderRecord> userOrderIdRecords = new ConcurrentHashMap<>();
-    private ConcurrentHashMap<Long, OrderRecord> tradeOrderIdRecords = new ConcurrentHashMap<>();
+    // TODO: Clear all the map post processing to avoid memory leak.
+    private ConcurrentHashMap<String, OrderRecords> userOrderIdRecords = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<Long, OrderRecords> tradeOrderIdRecords = new ConcurrentHashMap<>();
 
-    public void updateOrderRecord(NewOrderSingle newOrderSingle, final int brokerId) throws FieldNotFound {
-        final var orderRecord = new OrderRecord(newOrderSingle, brokerId);
-        userOrderIdRecords.put(newOrderSingle.getClOrdID().getValue(), orderRecord);
+    public OrderRecords userOrderRecord(final String userOrderId) {
+        return userOrderIdRecords.get(userOrderId);
     }
 
+    public OrderRecords tradeOrderRecord(final Long orderId) {
+        return tradeOrderIdRecords.get(orderId);
+    }
+
+    public void updateOrderRecord(NewOrderSingle newOrderSingle, final int brokerId, final long orderId) throws FieldNotFound {
+        final var orderRecord = new OrderRecords(newOrderSingle, brokerId, orderId);
+        userOrderIdRecords.put(newOrderSingle.getClOrdID().getValue(), orderRecord);
+        tradeOrderIdRecords.put(orderId, orderRecord);
+    }
 
     public void updateOrderRecord(final OrderCancelRequest orderCancelRequest) throws FieldNotFound {
         final var record = userOrderIdRecords.get(orderCancelRequest.getOrigClOrdID().getValue());
         record.updateOrderRecord(orderCancelRequest);
     }
 
-    public void updateOrderRecord(final OrderCancelReplaceRequest orderCancelReplaceRequest) throws FieldNotFound {
+    public void updateOrderRecord(final OrderCancelReplaceRequest orderCancelReplaceRequest, final long newOrderID) throws FieldNotFound {
         final var record = userOrderIdRecords.get(orderCancelReplaceRequest.getOrigClOrdID().getValue());
-        record.updateOrderRecord(orderCancelReplaceRequest);
+        record.updateOrderRecord(orderCancelReplaceRequest, newOrderID);
     }
 
-    public OrderRecord userOrderRecord(final String userOrderId) {
-        return userOrderIdRecords.get(userOrderId);
-    }
-
-    public OrderRecord tradeOrderRecord(final Long orderId) {
-        return tradeOrderIdRecords.get(orderId);
-    }
-
-    public void addExecutionReport(final ExecutionReport executionReport) throws FieldNotFound {
-        final var record = userOrderIdRecords.get(executionReport.getClOrdID().getValue());
+    public void addExecutionReport(final ExecutionReport executionReport, final int brokerId) throws FieldNotFound {
+        var record = userOrderIdRecords.get(executionReport.getClOrdID().getValue());
+        if (record == null) { // Case: Failure at Data validation.
+            record = new OrderRecords(executionReport, brokerId);
+        }
         record.updateOrderRecord(executionReport);
     }
 }

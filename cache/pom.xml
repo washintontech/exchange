@@ -29,7 +29,11 @@
 
     </properties>
     <dependencies>
-
+        <dependency>
+            <groupId>com.washintontech</groupId>
+            <artifactId>common</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

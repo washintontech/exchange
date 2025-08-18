@@ -11,6 +11,7 @@ import net.openhft.chronicle.wire.DocumentContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import quickfix.FieldNotFound;
+import quickfix.field.ExecType;
 import quickfix.fix44.OrderCancelReplaceRequest;
 import quickfix.fix44.OrderCancelRequest;
 
@@ -69,35 +70,33 @@ public class OrderBook {
         });
     }
 
-    public void processCancelOrder(final OrderCancelRequest order) throws FieldNotFound {
+    public void processCancelOrder(final OrderCancelRequest order, final long orderId) throws FieldNotFound {
         log.info("Processing CancelOrder: {}", order);
-        final var existingOrder = orderCache.get(Long.valueOf(order.getOrderID().getValue()));
+        final var existingOrder = orderCache.get(orderId);
         if (existingOrder != null) {
             existingOrder.getPrevious().setNext(existingOrder.getNext());
             orderPool.returnOrder(existingOrder);
+            saveTransaction(createTransaction(existingOrder, 0, ExecType.CANCELED));
         }
-        // TODO: Send Error report.
-        // Ensure validation at Broker before sending Cancel Order.
-
     }
 
-    public void processOrderCancelReplaceOrder(final OrderCancelReplaceRequest changedOrderRequest, final long newOrderId) throws FieldNotFound {
+    public void processOrderCancelReplaceOrder(final OrderCancelReplaceRequest changedOrderRequest,
+                                               final long oldOrderId, final long newOrderId) throws FieldNotFound {
         log.info("Processing OrderCancelReplaceOrder: {}", changedOrderRequest);
-        final var existingOrder = orderCache.get(Long.valueOf(changedOrderRequest.getOrderID().getValue()));
+        final var existingOrder = orderCache.get(oldOrderId);
         if (existingOrder != null) {
             existingOrder.getPrevious().setNext(existingOrder.getNext());
+            saveTransaction(createTransaction(existingOrder, 0, ExecType.REPLACED));
 
-            Order order = existingOrder.enrichWithOrderCancelReplaceOrder(changedOrderRequest, newOrderId);
-            getBook(order)
-                    .compute(order.getPrice(), (p, level) -> {
+            Order newOrder = existingOrder.enrichWithOrderCancelReplaceOrder(changedOrderRequest, newOrderId);
+            getBook(newOrder)
+                    .compute(newOrder.getPrice(), (p, level) -> {
                         if (level == null) level = new PriceLevel(p);
-                        level.add(order);
-                        orderCache.put(order.getOrderId(), order);
+                        level.add(newOrder);
+                        orderCache.put(newOrder.getOrderId(), newOrder);
                         return level;
                     });
         }
-        // TODO: Send Error report.
-        // Ensure validation at Broker before sending Cancel Order.
     }
 
     private ConcurrentNavigableMap<Long, PriceLevel> getBook(final Order order) {
@@ -146,13 +145,8 @@ public class OrderBook {
                             final PriceLevel bidLevel, final PriceLevel askLevel) {
         final var bidOrderPendingQty = bidOrder.pendingQuantities();
         final var askOrderPendingQty = askOrder.pendingQuantities();
-        final var transactionId = NumberUtils.generateThreadLocalRandomLong();
-        final var transactionTime = TimeUtils.generateInstantEpochNanoSec();
-
-        final Transaction bidTransaction = new Transaction(transactionId, transactionTime, bidOrder.getOrderId(),
-                transactionPrice, bidOrder.getSymbolId(), bidOrder.getBrokerId(), bidOrder.getSide());
-        final Transaction askTransaction = new Transaction(transactionId, transactionTime, askOrder.getOrderId(),
-                transactionPrice, askOrder.getSymbolId(), askOrder.getBrokerId(), askOrder.getSide());
+        final Transaction bidTransaction = createTransaction(bidOrder, transactionPrice, ExecType.FILL);
+        final Transaction askTransaction = createTransaction(askOrder, transactionPrice, ExecType.FILL);
 
         if (bidOrderPendingQty <= askOrderPendingQty) {
             bidTransaction.setQuantity(bidOrderPendingQty);
@@ -186,5 +180,12 @@ public class OrderBook {
                     .write("Transaction_v1")
                     .object(transaction);
         }
+    }
+
+    private Transaction createTransaction(final Order order, final long transactionPrice, final char executionType) {
+        final var transactionId = NumberUtils.generateThreadLocalRandomLong();
+        final var transactionTime = TimeUtils.generateInstantEpochNanoSec();
+        return new Transaction(transactionId, transactionTime, order.getOrderId(),
+                transactionPrice, order.getSymbolId(), order.getBrokerId(), order.getSide(), executionType);
     }
 }

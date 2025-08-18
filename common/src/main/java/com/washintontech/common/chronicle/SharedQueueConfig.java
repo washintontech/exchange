@@ -16,16 +16,17 @@ import java.io.File;
 public class SharedQueueConfig {
 
     private static final Logger log = LogManager.getLogger(SharedQueueConfig.class);
-
     private static final String RELATIVE_QUEUE_PATH = "data/transactionQueue";
 
+//    @Value("${chronicle.queue.rootDirectory}")
+//    private String rootPath;
 
     @Bean
     public ChronicleQueue createQueue() {
         try {
             // Use project root directory dynamically
-            String rootPath = System.getProperty("user.dir");
-            File queueDir = new File(rootPath, RELATIVE_QUEUE_PATH);
+            //String rootPath = System.getProperty("user.dir");
+            File queueDir = new File("../", RELATIVE_QUEUE_PATH);
 
             // Make sure directory exists
             if (!queueDir.exists()) {

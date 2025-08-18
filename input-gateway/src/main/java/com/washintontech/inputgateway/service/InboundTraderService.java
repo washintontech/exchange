@@ -7,23 +7,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 import quickfix.FieldNotFound;
-import quickfix.field.ExecID;
-import quickfix.field.ExecType;
-import quickfix.field.OrdStatus;
-import quickfix.field.OrderID;
-import quickfix.field.OrigClOrdID;
-import quickfix.field.TransactTime;
 import quickfix.fix44.ExecutionReport;
 import quickfix.fix44.NewOrderSingle;
 import quickfix.fix44.OrderCancelReplaceRequest;
 import quickfix.fix44.OrderCancelRequest;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.UUID;
-
-import static com.washintontech.cache.model.OrderRecord.EXEC_STRING;
-import static com.washintontech.cache.model.OrderRecord.UTC_STRING;
+import static com.washintontech.matchingEngine.util.NumberUtils.generateThreadLocalRandomLong;
 
 @Service
 @RequiredArgsConstructor
@@ -34,73 +23,53 @@ public class InboundTraderService {
     private final RiskService riskService;
     private final OrderBookEngine orderBookEngine;
     private final OrderRecordService orderRecordService;
+    private final ExecutionReportService executionReportService;
 
-    public ExecutionReport processNewTradeRequest(final NewOrderSingle clientOrder, final int brokerId) throws FieldNotFound {
+    public ExecutionReport processNewTradeRequest(final NewOrderSingle clientOrder, final int brokerId)
+            throws FieldNotFound {
         log.debug("ClientOrder received from brokerId: {}, {}", brokerId, clientOrder);
-        validationService.validateRequest(clientOrder, brokerId);
+        final var orderId = generateThreadLocalRandomLong();
+
+        validationService.validateRequest(clientOrder);
         complianceService.ensureCompliance(clientOrder);
         riskService.riskAssessment(clientOrder);
-        final long orderId = orderBookEngine.submitNewOrder(clientOrder, brokerId);
-        final var executionReport = executionReportNewOrderSingle(clientOrder, orderId);
-        orderRecordService.addExecutionReport(executionReport);
+
+        orderRecordService.updateOrderRecord(clientOrder, brokerId, orderId);
+        orderBookEngine.submitNewOrder(clientOrder, brokerId, orderId);
+        final var executionReport = executionReportService.executionReport(clientOrder, orderId);
+        orderRecordService.addExecutionReport(executionReport, brokerId);
         return executionReport;
     }
 
-    public ExecutionReport processCancelTradeRequest(final OrderCancelRequest order, final int brokerId) throws FieldNotFound {
+    public ExecutionReport processCancelTradeRequest(final OrderCancelRequest order, final int brokerId)
+            throws FieldNotFound {
         log.debug("Cancel Order received from brokerId: {}, {}", brokerId, order);
-        validationService.validateRequest(order, brokerId);
-        final long orderId = orderBookEngine.submitCancelOrder(order, brokerId);
-        final var executionReport = executionReportCancelTradeRequest(order, orderId);
-        orderRecordService.addExecutionReport(executionReport);
+        final var orderRecord = orderRecordService.userOrderRecord(order.getOrigClOrdID().getValue());
+
+        validationService.validateRequest(order, brokerId, orderRecord.getLatestSingleOrderId());
+        orderRecordService.updateOrderRecord(order);
+
+        orderBookEngine.submitCancelOrder(order, orderRecord.getLatestSingleOrderId());
+        final var executionReport = executionReportService.executionReport(order, orderRecord.getLatestSingleOrderId());
+        orderRecordService.addExecutionReport(executionReport, brokerId);
         return executionReport;
     }
 
 
-    public ExecutionReport processOrderCancelReplaceRequest(final OrderCancelReplaceRequest order, final int brokerId) throws FieldNotFound {
-        validationService.validateRequest(order, brokerId);
+    public ExecutionReport processOrderCancelReplaceRequest(final OrderCancelReplaceRequest order,
+                                                            final int brokerId) throws FieldNotFound {
         log.debug("OrderCancelReplace Order received from brokerId: {}, {}", brokerId, order);
-        final long orderId = orderBookEngine.submitOrderCancelReplaceOrder(order, brokerId);
-        final var executionReport = executionReportOrderCancelReplaceRequest(order, orderId);
-        orderRecordService.addExecutionReport(executionReport);
+        final var newOrderID = generateThreadLocalRandomLong();
+
+        final var orderRecord = orderRecordService.userOrderRecord(order.getOrigClOrdID().getValue());
+        validationService.validateRequest(order, brokerId, orderRecord);
+        final var oldOrderId = orderRecord.getLatestSingleOrderId();
+        orderRecordService.updateOrderRecord(order, newOrderID);
+
+        orderBookEngine.submitOrderCancelReplaceOrder(order, oldOrderId, newOrderID);
+        final var executionReport = executionReportService.executionReport(order, newOrderID);
+        orderRecordService.addExecutionReport(executionReport, brokerId);
         return executionReport;
-    }
-
-    private ExecutionReport executionReportOrderCancelReplaceRequest(final OrderCancelReplaceRequest order, final long orderId) throws FieldNotFound {
-        final var report = new ExecutionReport();
-        report.set(order.getClOrdID());
-        report.set(new OrigClOrdID(order.getOrderID().getValue()));
-
-        report.set(new OrderID(String.valueOf(orderId)));
-        report.set(new ExecID(EXEC_STRING + UUID.randomUUID()));
-        report.set(new ExecType(ExecType.REPLACED));
-        report.set(new OrdStatus(OrdStatus.ACCEPTED_FOR_BIDDING));
-        report.set(new TransactTime(LocalDateTime.now(ZoneId.of(UTC_STRING))));
-        report.set(order.getAccount());
-        return report;
-    }
-
-    private ExecutionReport executionReportCancelTradeRequest(final OrderCancelRequest order, final long orderId) throws FieldNotFound {
-        final var report = new ExecutionReport();
-        report.set(order.getClOrdID());
-        report.set(new OrderID(String.valueOf(orderId)));
-        report.set(new ExecID(EXEC_STRING + UUID.randomUUID()));
-        report.set(new ExecType(ExecType.CANCELED));
-        report.set(new OrdStatus(OrdStatus.ACCEPTED_FOR_BIDDING));
-        report.set(new TransactTime(LocalDateTime.now(ZoneId.of(UTC_STRING))));
-        report.set(order.getAccount());
-        return report;
-    }
-
-    private ExecutionReport executionReportNewOrderSingle(final NewOrderSingle clientOrder, final long orderId) throws FieldNotFound {
-        final var report = new ExecutionReport();
-        report.set(clientOrder.getClOrdID());
-        report.set(new OrderID(String.valueOf(orderId)));
-        report.set(new ExecID(EXEC_STRING + UUID.randomUUID()));
-        report.set(new ExecType(ExecType.NEW));
-        report.set(new OrdStatus(OrdStatus.ACCEPTED_FOR_BIDDING));
-        report.set(new TransactTime(LocalDateTime.now(ZoneId.of(UTC_STRING))));
-        report.set(clientOrder.getAccount());
-        return report;
     }
 }
 

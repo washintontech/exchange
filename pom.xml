@@ -42,16 +42,12 @@
         <protobuf.maven.plugin.version>0.6.1</protobuf.maven.plugin.version>
         <tomcat.annotations.version>6.0.53</tomcat.annotations.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.rootdir>${project.basedir}</project.rootdir>
     </properties>
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.washingtontech</groupId>
-            <artifactId>exchange-broker-proto</artifactId>
-            <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>net.openhft</groupId>
@@ -126,16 +122,6 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>3.17.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.projectreactor</groupId>
-            <artifactId>reactor-test</artifactId>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 

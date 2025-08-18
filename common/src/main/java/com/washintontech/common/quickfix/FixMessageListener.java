@@ -12,8 +12,8 @@ public interface FixMessageListener {
 
     ExecutionReport onNewOrderSingle(NewOrderSingle order, SessionID sessionID) throws FieldNotFound;
 
-    ExecutionReport onOrderCancelRequest(OrderCancelRequest order, SessionID sessionID);
+    ExecutionReport onOrderCancelRequest(OrderCancelRequest order, SessionID sessionID) throws FieldNotFound;
 
-    ExecutionReport onOrderCancelReplaceRequest(OrderCancelReplaceRequest order, SessionID sessionID);
+    ExecutionReport onOrderCancelReplaceRequest(OrderCancelReplaceRequest order, SessionID sessionID) throws FieldNotFound;
 
 }

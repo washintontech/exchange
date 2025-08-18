@@ -108,13 +108,13 @@
 
         <message name="ExecutionReport" msgtype="8" msgcat="app">
             <field name="ClOrdID" required="Y"/>
-            <field name="OrderID" required="Y"/>
+            <field name="OrderID" required="N"/>
             <field name="ExecID" required="Y"/>
             <field name="ExecType" required="Y"/>
             <field name="OrdStatus" required="Y"/>
             <field name="TransactTime" required="Y"/>
             <field name="OrigClOrdID" required="N"/>
-            <field name="Symbol" required="Y"/>
+            <field name="Symbol" required="N"/>
             <field name="Side" required="N"/>
             <field name="OrderQty" required="N"/>
             <field name="Price" required="N"/>

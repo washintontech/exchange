@@ -10,7 +10,7 @@ public class NumberUtils {
     private static final AtomicLong counter = new AtomicLong(0);
 
 
-    public static long midValue(final float price, final float price1, final int scale, final float multiple) {
+    public static long midValue(final long price, final long price1, final int scale, final float multiple) {
         BigDecimal bd1 = BigDecimal.valueOf(price);
         BigDecimal bd2 = BigDecimal.valueOf(price1);
         BigDecimal multipleDecimal = BigDecimal.valueOf(multiple);

@@ -1,5 +1,6 @@
 package com.washintontech.matchingEngine.model;
 
+import com.washintontech.common.quickfix.FixUtils;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -10,8 +11,6 @@ import quickfix.field.Side;
 import quickfix.fix44.NewOrderSingle;
 import quickfix.fix44.OrderCancelReplaceRequest;
 
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Getter
@@ -23,7 +22,7 @@ public final class Order implements Poolable {
     private long price;
     private long quantity;
     private char side;
-    private long sequenceNumber;
+    //private long sequenceNumber;
     private int brokerId;
     @Setter
     private Order previous;
@@ -32,7 +31,7 @@ public final class Order implements Poolable {
     @Setter
     private AtomicLong executedQuantity;
 
-    private ThreadPoolExecutor threadPoolExecutor;
+    //private ThreadPoolExecutor threadPoolExecutor;
 
     public Order(final int poolIndex) {
         this.poolIndex = poolIndex;
@@ -43,27 +42,18 @@ public final class Order implements Poolable {
         this.symbolId = symbolId;
         this.brokerId = brokerId;
         this.orderId = orderId;
-        this.price = FixUtils.convertPriceDoubleToLong(requestOrder.getDouble(Price.FIELD));
-        this.quantity = FixUtils.convertPriceDoubleToLong(requestOrder.getDouble(OrderQty.FIELD));
+        this.price = FixUtils.convertPriceDoubleToLong(requestOrder.getOrdType(), requestOrder.getDouble(Price.FIELD));
+        this.quantity = FixUtils.convertQtyDoubleToLong(requestOrder.getDouble(OrderQty.FIELD));
         this.side = requestOrder.getChar(Side.FIELD);
     }
 
-    public Order enrichWithOrderCancelReplaceOrder(final OrderCancelReplaceRequest changedOrderRequest, final long orderId) throws FieldNotFound {
+    public Order enrichWithOrderCancelReplaceOrder(final OrderCancelReplaceRequest changedOrderRequest,
+                                                   final long orderId) throws FieldNotFound {
         this.orderId = orderId;
-        this.price = FixUtils.convertPriceDoubleToLong(changedOrderRequest.getDouble(Price.FIELD));
-        this.quantity = FixUtils.convertPriceDoubleToLong(changedOrderRequest.getDouble(OrderQty.FIELD));
+        this.price = FixUtils.convertPriceDoubleToLong(changedOrderRequest.getOrdType(), changedOrderRequest.getDouble(Price.FIELD));
+        this.quantity = FixUtils.convertQtyDoubleToLong(changedOrderRequest.getDouble(OrderQty.FIELD));
         return this;
     }
-
-//    public void enrichOrder(final BrokerTradeRequest brokerTradeRequest, final long orderId) {
-//        this.script = brokerTradeRequest.getScript();
-//        this.brokerId = brokerTradeRequest.getBrokerId();
-//        this.orderId = orderId;
-//        this.price = brokerTradeRequest.getPrice();
-//        this.quantity = brokerTradeRequest.getQuantity();
-//        this.isBid = brokerTradeRequest.isBid();
-//        //this.sequenceNumber
-//    }
 
     public long pendingQuantities() {
         return quantity - executedQuantity.get();
@@ -71,10 +61,6 @@ public final class Order implements Poolable {
 
     public void reduceQuantity(final long remaining) {
 
-    }
-
-    public static long generateThreadLocalRandomLong() {
-        return ThreadLocalRandom.current().nextLong();
     }
 
     public void updateExecutedQuantity(final long newQty) {
