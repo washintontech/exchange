@@ -12,14 +12,14 @@ import quickfix.fix44.NewOrderSingle;
 import quickfix.fix44.OrderCancelReplaceRequest;
 import quickfix.fix44.OrderCancelRequest;
 
-import java.util.List;
+import java.util.ArrayList;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Data
 public class OrderRecords {
 
-    public static final String UTC_STRING = "UTC";
+
     public static final String EXEC_STRING = "EXEC";
 
     private int brokerId;
@@ -45,7 +45,7 @@ public class OrderRecords {
         final var price = FixUtils.convertPriceDoubleToLong(newOrderSingle.getOrdType(), newOrderSingle.getDouble(Price.FIELD));
         singleOrderRecords.push(
                 new SingleOrderRecord(orderId, qty, newOrderSingle.getOrdType(), price, 0,
-                        new AtomicLong(qty), List.of(), ExecType.NEW));
+                        new AtomicLong(qty), new ArrayList<>(), ExecType.NEW));
     }
 
     public OrderRecords(final ExecutionReport executionReport, final int brokerId) throws FieldNotFound {
@@ -78,7 +78,7 @@ public class OrderRecords {
                 orderCancelReplaceRequest.getDouble(Price.FIELD));
         singleOrderRecords.push(
                 new SingleOrderRecord(newOrderID, qty, orderCancelReplaceRequest.getOrdType(), price, originalOrderId,
-                        new AtomicLong(qty), List.of(), ExecType.NEW));
+                        new AtomicLong(qty), new ArrayList<>(), ExecType.NEW));
     }
 
     public void updateOrderRecord(final ExecutionReport executionReport) {

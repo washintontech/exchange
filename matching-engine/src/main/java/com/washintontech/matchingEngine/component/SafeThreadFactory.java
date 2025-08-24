@@ -1,24 +1,24 @@
 package com.washintontech.matchingEngine.component;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
+
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 
+@Log4j2
+@RequiredArgsConstructor
 public class SafeThreadFactory implements ThreadFactory {
-    private static final String THREAD_NAME_PREFIX = "OrderBookWriter-";
-    private int partitionId;
-    private ThreadPoolExecutor[] writers;
-
-    public SafeThreadFactory(final int partitionId, final ThreadPoolExecutor[] writers) {
-        this.partitionId = partitionId;
-        this.writers = writers;
-    }
+    private static final String THREAD_NAME_PREFIX = "OrderBook-";
+    private final int partitionId;
+    private final ThreadPoolExecutor[] writers;
 
     @Override
     public Thread newThread(final Runnable r) {
         Thread t = new Thread(r, THREAD_NAME_PREFIX + partitionId);
 
         t.setUncaughtExceptionHandler((thread, ex) -> {
-            //logger.error("Fatal error in partition {}: {}", i, ex.getMessage(), ex);
+            log.error("Fatal error in partition: {}. Restarting partition: {}", partitionId, ex.getMessage(), ex);
             restartPartition();
         });
 
@@ -34,7 +34,7 @@ public class SafeThreadFactory implements ThreadFactory {
             if (!writers[partitionId].isShutdown() || !writers[partitionId].isTerminated()) {
                 return;
             }
-            //logger.warn("Restarting partition {}", partitionId);
+            log.warn("Restarting partition {}", partitionId);
             writers[partitionId] = new SafeExecutorService(partitionId, writers, writers[partitionId].getQueue());
         }
     }

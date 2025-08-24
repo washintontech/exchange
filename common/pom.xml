@@ -9,7 +9,7 @@
         <relativePath>./../pom.xml</relativePath>
     </parent>
     <artifactId>common</artifactId>
-    <version>${project.parent.version}</version>
+    <version>0.0.1-SNAPSHOT</version>
     <name>common</name>
     <description>common</description>
     <url/>
@@ -28,6 +28,12 @@
     <properties>
     </properties>
     <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.38</version>
+            <scope>provided</scope>
+        </dependency>
 
 
         <!-- Logging -->

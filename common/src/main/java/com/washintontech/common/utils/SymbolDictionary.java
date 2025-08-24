@@ -1,4 +1,4 @@
-package com.washintontech.matchingEngine.model;
+package com.washintontech.common.utils;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -18,7 +18,7 @@ public class SymbolDictionary {
         });
     }
 
-    public String idToSymbol(Integer id) {
+    public static String idToSymbol(Integer id) {
         return idToSymbolMap.get(id);
     }
 

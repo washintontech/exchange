@@ -18,7 +18,6 @@ public final class PriceLevel {
 
     // TODO: Check for concurrency
     public void add(Order order) {
-        // TODO: Remove
         order.setNext(null);
         order.setPrevious(null);
 

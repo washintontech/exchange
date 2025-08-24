@@ -1,8 +1,8 @@
 package com.washintontech.common.component;
 
 import com.washintontech.common.quickfix.FixMessageListener;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import quickfix.Application;
 import quickfix.DoNotSend;
 import quickfix.FieldNotFound;
@@ -23,26 +23,24 @@ import quickfix.fix44.OrderCancelRequest;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Log4j2
+@RequiredArgsConstructor
 public class FixApplication extends MessageCracker implements Application {
 
-    private static final Logger log = LogManager.getLogger(FixApplication.class);
     private final FixMessageListener fixMessageListener;
 
     private final Map<SessionID, Session> activeSessions = new ConcurrentHashMap<>();
     private final Map<Integer, SessionID> brokerSessions = new ConcurrentHashMap<>();
 
-    public FixApplication(final FixMessageListener listener) {
-        this.fixMessageListener = listener;
-    }
-
     @Override
     public void onLogon(final SessionID sessionId) {
         String brokerId = sessionId.getTargetCompID();
         brokerSessions.put(Integer.parseInt(brokerId), sessionId);
-        log.info("Broker [{}] logged in with session {}", brokerId, sessionId);
+        log.debug("Broker [{}] logged in with session {}", brokerId, sessionId);
     }
 
     public void sendToBroker(int brokerId, Message message) {
+        log.debug("Sending message to broker: {}, message: {}", brokerId, message);
         SessionID sessionId = brokerSessions.get(brokerId);
         if (sessionId != null && Session.doesSessionExist(sessionId)) {
             try {
@@ -58,43 +56,43 @@ public class FixApplication extends MessageCracker implements Application {
     @Override
     public void onCreate(final SessionID sessionId) {
         activeSessions.put(sessionId, Session.lookupSession(sessionId));
-        log.info("Session created: {}", sessionId);
+        log.debug("Session created: {}", sessionId);
     }
 
     @Override
     public void onLogout(final SessionID sessionId) {
         activeSessions.remove(sessionId);
-        log.info("Session terminated: {}", sessionId);
+        log.debug("Session terminated: {}", sessionId);
     }
 
     @Override
     public void fromApp(final Message message, final SessionID sessionId) throws FieldNotFound,
             IncorrectTagValue, UnsupportedMessageType {
-        log.info("Received message from app: {}", message);
+        log.debug("Received message from app: {}", message);
         crack(message, sessionId);
     }
 
     @Handler
     public void onMessage(NewOrderSingle order, SessionID sessionID) throws FieldNotFound {
-        log.info("Received NewOrderSingle from app: {}", order);
+        log.debug("Received NewOrderSingle from app: {}", order);
         ExecutionReport executionReport = fixMessageListener.onNewOrderSingle(order, sessionID);
-        log.info("Response ExecutionReport : {}", executionReport);
+        log.debug("Response ExecutionReport : {}", executionReport);
         sendExecutionReport(executionReport, sessionID);
     }
 
     @Handler
     public void onMessage(OrderCancelRequest order, SessionID sessionID) throws FieldNotFound {
-        log.info("Received OrderCancelRequest from app: {}", order);
+        log.debug("Received OrderCancelRequest from app: {}", order);
         ExecutionReport executionReport = fixMessageListener.onOrderCancelRequest(order, sessionID);
-        log.info("Response ExecutionReport : {}", executionReport);
+        log.debug("Response ExecutionReport : {}", executionReport);
         sendExecutionReport(executionReport, sessionID);
     }
 
     @Handler
     public void onMessage(OrderCancelReplaceRequest order, SessionID sessionID) throws FieldNotFound {
-        log.info("Received OrderCancelReplaceRequest from app: {}", order);
+        log.debug("Received OrderCancelReplaceRequest from app: {}", order);
         ExecutionReport executionReport = fixMessageListener.onOrderCancelReplaceRequest(order, sessionID);
-        log.info("Response ExecutionReport : {}", executionReport);
+        log.debug("Response ExecutionReport : {}", executionReport);
         sendExecutionReport(executionReport, sessionID);
     }
 

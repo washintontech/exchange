@@ -1,10 +1,9 @@
 package com.washintontech.matchingEngine.component;
 
+import com.washintontech.common.chronicle.ChronicleQueueOperation;
+import com.washintontech.common.utils.SymbolDictionary;
 import com.washintontech.matchingEngine.model.OrderPool;
-import com.washintontech.matchingEngine.model.SymbolDictionary;
-import net.openhft.chronicle.queue.ExcerptAppender;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
 import quickfix.FieldNotFound;
 import quickfix.fix44.NewOrderSingle;
@@ -18,8 +17,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 
 @Component
+@Log4j2
 public class OrderBookEngine {
-    private static final Logger log = LogManager.getLogger(OrderBookEngine.class);
     private static final int PARTITIONS = Runtime.getRuntime().availableProcessors() * 2;
     private static final int MAX_QUEUE_DEPTH = 200_000;
     private final ConcurrentMap<Integer, OrderBook> orderBooks;
@@ -37,10 +36,10 @@ public class OrderBookEngine {
 
     private final OrderPool orderPool;
 
-    private final ExcerptAppender appender;
+    private final ChronicleQueueOperation queueOperation;
 
-    public OrderBookEngine(final ExcerptAppender appender) {
-        this.appender = appender;
+    public OrderBookEngine(final ChronicleQueueOperation queueOperation) {
+        this.queueOperation = queueOperation;
         this.orderPool = new OrderPool();
         this.orderBooks = new ConcurrentHashMap<>();
         this.writers = new SafeExecutorService[PARTITIONS];
@@ -62,14 +61,13 @@ public class OrderBookEngine {
         writers[partition].submit(
                 () -> {
                     OrderBook book = orderBooks.computeIfAbsent(symbolId,
-                            script -> new OrderBook(script, orderPool, appender));
+                            script -> new OrderBook(script, orderPool, queueOperation));
                     final var order = orderPool.borrowOrder();
                     try {
                         order.enrichOrderWithNewOrderSingle(requestOrder, orderId, brokerId, symbolId);
                     } catch (FieldNotFound e) {
                         log.error("Field not found while enriching order: {}", e.getMessage());
                         // TODO: Ensure no FieldNotFound thrown at Validate phase
-                        //throw new RuntimeException(e);
                     }
                     book.processNewOrder(order);
                 }

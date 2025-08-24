@@ -3,8 +3,8 @@ package com.washintontech.inputgateway.service;
 import com.washintontech.cache.model.OrderRecords;
 import com.washintontech.cache.service.OrderRecordService;
 import com.washintontech.inputgateway.exception.BadRequestException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import quickfix.FieldNotFound;
 import quickfix.field.Account;
@@ -21,14 +21,11 @@ import quickfix.fix44.OrderCancelRequest;
 import java.math.BigDecimal;
 
 @Service
+@Log4j2
+@RequiredArgsConstructor
 public class ValidationService {
-    private static final Logger log = LogManager.getLogger(InboundTraderService.class);
 
     private final OrderRecordService orderRecordService;
-
-    public ValidationService(final OrderRecordService orderRecordService) {
-        this.orderRecordService = orderRecordService;
-    }
 
     public void validateRequest(NewOrderSingle newOrderSingle) throws FieldNotFound {
         validateOrder(newOrderSingle.getPrice(), newOrderSingle.getOrdType(), newOrderSingle.getOrderQty());
@@ -57,12 +54,12 @@ public class ValidationService {
     private void validateOrder(final Price price, final OrdType ordType, final OrderQty orderQty) {
         int errorCount = 0;
         StringBuilder errorBuffer = new StringBuilder();
-        if (validatePrice(ordType, price)) {
+        if (!validatePrice(ordType, price)) {
             errorCount++;
             errorBuffer.append("Invalid price: ").append(price.getValue()).append("\n");
         }
 
-        if (validateQty(orderQty)) {
+        if (!validateQty(orderQty)) {
             errorCount++;
             errorBuffer.append("Invalid Order Qty: ").append(orderQty.getValue()).append("\n");
         }
@@ -74,7 +71,7 @@ public class ValidationService {
 
     private boolean validateQty(final OrderQty orderQty) {
         BigDecimal bd = BigDecimal.valueOf(orderQty.getValue()).stripTrailingZeros();
-        return bd.scale() == 0;
+        return bd.scale() <= 0;
     }
 
     private boolean validatePrice(final OrdType ordType, final Price price) {

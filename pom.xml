@@ -30,6 +30,7 @@
     </scm>
     <properties>
         <java.version>11</java.version>
+        <spring-boot.version>3.5.4</spring-boot.version>
         <os.maven.plugin.version>1.7.1</os.maven.plugin.version>
         <quickfixj.version>2.3.2</quickfixj.version>
         <chronicle.queue.version>5.27ea5</chronicle.queue.version>
@@ -48,6 +49,7 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
+            <version>${spring-boot.version}</version>
         </dependency>
         <dependency>
             <groupId>net.openhft</groupId>
@@ -113,15 +115,9 @@
             <artifactId>spring-boot-starter-log4j2</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.18.38</version>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.17.0</version>
+            <version>3.18.0</version>
         </dependency>
     </dependencies>
 
@@ -149,44 +145,6 @@
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
-            <!--            <plugin>-->
-            <!--                <groupId>org.springframework.boot</groupId>-->
-            <!--                <artifactId>spring-boot-maven-plugin</artifactId>-->
-            <!--                <configuration>-->
-            <!--                    <jvmArguments>-->
-            <!--                        &lt;!&ndash;                        &#45;&#45;add-opens java.base/java.lang.reflect=ALL-UNNAMED&ndash;&gt;-->
-            <!--                        &lt;!&ndash;                        &#45;&#45;add-opens java.base/java.nio=ALL-UNNAMED&ndash;&gt;-->
-            <!--                        &lt;!&ndash;                        &#45;&#45;add-opens java.base/sun.nio.ch=ALL-UNNAMED&ndash;&gt;-->
-            <!--                        &lt;!&ndash;                        &#45;&#45;add-opens java.base/java.io=ALL-UNNAMED&ndash;&gt;-->
-
-
-            <!--                        &lt;!&ndash;                        &#45;&#45;add-exports=java.base/jdk.internal.ref=ALL-UNNAMED&ndash;&gt;-->
-            <!--                        &lt;!&ndash;                        &#45;&#45;add-exports=java.base/sun.nio.ch=ALL-UNNAMED&ndash;&gt;-->
-            <!--                        &lt;!&ndash;                        &#45;&#45;add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED&ndash;&gt;-->
-            <!--                        &lt;!&ndash;                        &#45;&#45;add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED&ndash;&gt;-->
-            <!--                        &#45;&#45;add-opens=jdk.compiler/com.sun.tools.javac=ALL-UNNAMED-->
-            <!--                        &#45;&#45;add-opens=java.base/java.lang=ALL-UNNAMED-->
-            <!--                        &#45;&#45;add-opens=java.base/java.lang.reflect=ALL-UNNAMED-->
-            <!--                        &#45;&#45;add-opens=java.base/java.io=ALL-UNNAMED-->
-            <!--                        &#45;&#45;add-opens=java.base/java.util=ALL-UNNAMED-->
-
-            <!--                    </jvmArguments>-->
-            <!--                </configuration>-->
-            <!--            </plugin>-->
-
-
-            <!--            <plugin>-->
-            <!--                <groupId>org.springframework.boot</groupId>-->
-            <!--                <artifactId>spring-boot-maven-plugin</artifactId>-->
-            <!--                <configuration>-->
-            <!--                    <excludes>-->
-            <!--                        <exclude>-->
-            <!--                            <groupId>org.project-lombok</groupId>-->
-            <!--                            <artifactId>lombok</artifactId>-->
-            <!--                        </exclude>-->
-            <!--                    </excludes>-->
-            <!--                </configuration>-->
-            <!--            </plugin>-->
         </plugins>
     </build>
 

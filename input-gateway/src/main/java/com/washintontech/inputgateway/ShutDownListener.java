@@ -1,36 +1,20 @@
 package com.washintontech.inputgateway;
 
-//import com.washintontech.inputgateway.config.GrpcServer;
-
-import io.grpc.ManagedChannel;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.washintontech.cache.service.MarketRecordService;
+import com.washintontech.common.chronicle.ChronicleQueueOperation;
+import com.washintontech.outputgateway.component.OutboundService;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextClosedEvent;
 
-import java.util.concurrent.TimeUnit;
 
-
+@Log4j2
 public class ShutDownListener implements ApplicationListener<ContextClosedEvent> {
-    private static final Logger log = LogManager.getLogger(ShutDownListener.class);
-
     @Override
     public void onApplicationEvent(final ContextClosedEvent event) {
-//        event.getApplicationContext().getBean(GrpcServer.class)
-//                .stop();
-
-        try {
-            event.getApplicationContext().getBean(ManagedChannel.class)
-                    .shutdownNow()
-                    .awaitTermination(5, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            log.error("Error occurred while waiting at Managed channel termination", e);
-        }
+        event.getApplicationContext().getBean(OutboundService.class).shutDown();
+        event.getApplicationContext().getBean(MarketRecordService.class).shutDown();
+        event.getApplicationContext().getBean(ChronicleQueueOperation.class).shutDown();
         log.info("Matching Engine is shutting down. Bye!");
-
-//        log.info("""
-//
-//                    Matching Engine is shutting down. Bye!        \s
-//                """);
     }
 }

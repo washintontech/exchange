@@ -1,15 +1,13 @@
 package com.washintontech.matchingEngine.component;
 
+import com.washintontech.common.chronicle.ChronicleQueueOperation;
 import com.washintontech.common.chronicle.Transaction;
+import com.washintontech.common.utils.TimeUtils;
 import com.washintontech.matchingEngine.model.Order;
 import com.washintontech.matchingEngine.model.OrderPool;
 import com.washintontech.matchingEngine.model.PriceLevel;
 import com.washintontech.matchingEngine.util.NumberUtils;
-import com.washintontech.matchingEngine.util.TimeUtils;
-import net.openhft.chronicle.queue.ExcerptAppender;
-import net.openhft.chronicle.wire.DocumentContext;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import lombok.extern.log4j.Log4j2;
 import quickfix.FieldNotFound;
 import quickfix.field.ExecType;
 import quickfix.fix44.OrderCancelReplaceRequest;
@@ -17,7 +15,6 @@ import quickfix.fix44.OrderCancelRequest;
 
 import java.util.Comparator;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -26,41 +23,34 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import static java.util.concurrent.TimeUnit.MICROSECONDS;
 
+@Log4j2
 public class OrderBook {
-    private static final Logger log = LogManager.getLogger(OrderBook.class);
     private final int symbolId;
     private final OrderPool orderPool;
     private final ConcurrentNavigableMap<Long, PriceLevel> bids; // TODO: Long and PriceLevel -> GC load
     private final ConcurrentNavigableMap<Long, PriceLevel> asks;
-    private final Map<Long, Order> orderCache; // TODO: check the need
-    private final ScheduledExecutorService transactionExecutor;
-//    private final ExecutorService postTransactionExecutor;
-//
-//    private final TradeBook tradeBook;
 
     // TODO: Flat array map + concurrency
     // private final Long2ObjectOpenHashMap<Order> orderCache = new Long2ObjectOpenHashMap<>(1024, 0.75f);
+    private final Map<Long, Order> orderCache;
+    private final ScheduledExecutorService transactionExecutor;
 
     private volatile long sequenceNumber;
-    private final ExcerptAppender appender;
+    private final ChronicleQueueOperation queueOperation;
 
-    public OrderBook(final int symbolId, final OrderPool orderPool, final ExcerptAppender appender) {
+    public OrderBook(final int symbolId, final OrderPool orderPool, final ChronicleQueueOperation queueOperation) {
         this.symbolId = symbolId;
         this.orderPool = orderPool;
         this.bids = new ConcurrentSkipListMap<>(Comparator.reverseOrder());
         this.asks = new ConcurrentSkipListMap<>();
         this.orderCache = new ConcurrentHashMap<>();
-        this.transactionExecutor = Executors.newSingleThreadScheduledExecutor();
+        this.transactionExecutor = createTransactionExecutor();
         transactionExecutor.scheduleAtFixedRate(this::transact, 10, 10, MICROSECONDS);
-        // private final ExecutorService matchingPool = Executors.newFixedThreadPool(4, new AffinityThreadFactory());
-
-//        this.postTransactionExecutor = Executors.newFixedThreadPool(1);
-//        this.tradeBook = new TradeBook(symbolId);
-        this.appender = appender;
+        this.queueOperation = queueOperation;
     }
 
     public void processNewOrder(final Order order) {
-        log.info("Processing order: {}", order);
+        log.debug("Processing order: {}", order);
         ConcurrentNavigableMap<Long, PriceLevel> book = getBook(order);
         book.compute(order.getPrice(), (p, level) -> {
             if (level == null) level = new PriceLevel(p);
@@ -71,22 +61,22 @@ public class OrderBook {
     }
 
     public void processCancelOrder(final OrderCancelRequest order, final long orderId) throws FieldNotFound {
-        log.info("Processing CancelOrder: {}", order);
+        log.debug("Processing CancelOrder: {}", order);
         final var existingOrder = orderCache.get(orderId);
         if (existingOrder != null) {
             existingOrder.getPrevious().setNext(existingOrder.getNext());
             orderPool.returnOrder(existingOrder);
-            saveTransaction(createTransaction(existingOrder, 0, ExecType.CANCELED));
+            queueOperation.addTransaction(createTransaction(existingOrder, 0, ExecType.CANCELED));
         }
     }
 
     public void processOrderCancelReplaceOrder(final OrderCancelReplaceRequest changedOrderRequest,
                                                final long oldOrderId, final long newOrderId) throws FieldNotFound {
-        log.info("Processing OrderCancelReplaceOrder: {}", changedOrderRequest);
+        log.debug("Processing OrderCancelReplaceOrder: {}", changedOrderRequest);
         final var existingOrder = orderCache.get(oldOrderId);
         if (existingOrder != null) {
             existingOrder.getPrevious().setNext(existingOrder.getNext());
-            saveTransaction(createTransaction(existingOrder, 0, ExecType.REPLACED));
+            queueOperation.addTransaction(createTransaction(existingOrder, 0, ExecType.REPLACED));
 
             Order newOrder = existingOrder.enrichWithOrderCancelReplaceOrder(changedOrderRequest, newOrderId);
             getBook(newOrder)
@@ -108,41 +98,46 @@ public class OrderBook {
 
     // Level -> Order -> items
     private void transact() { // TODO: Check if previous transaction still going on .. may be Add as Runnable in queue
-        //log.info("Transact: bids.size(): {},  asks.size(): {}", bids.size(), asks.size());
-        while (!bids.isEmpty() && !asks.isEmpty()) {
-            final var priceLevelBidEntry = bids.firstEntry();
-            final var bidPrice = priceLevelBidEntry.getKey();
-            final var bidLevel = priceLevelBidEntry.getValue();
+        try {
+            while (!bids.isEmpty() && !asks.isEmpty()) {
+                final var priceLevelBidEntry = bids.firstEntry();
+                final var bidPrice = priceLevelBidEntry.getKey();
+                final var bidLevel = priceLevelBidEntry.getValue();
 
-            final var priceLevelAskEntry = asks.firstEntry();
-            final var askPrice = priceLevelAskEntry.getKey();
-            final var askLevel = priceLevelAskEntry.getValue();
+                final var priceLevelAskEntry = asks.firstEntry();
+                final var askPrice = priceLevelAskEntry.getKey();
+                final var askLevel = priceLevelAskEntry.getValue();
 
-            if (bidPrice < askPrice) {
-                return;
-            }
-
-            final var transactionPrice = NumberUtils.midValue( // TODO: Rectify for long
-                    bidPrice, askPrice, 4, 0.0005f);
-
-            while (true) {
-                final var bidOrder = bidLevel.getHead();
-                if (bidOrder == null) {
-                    bids.remove(bidPrice);
-                    break;
+                if (bidPrice < askPrice) {
+                    return;
                 }
-                final var askOrder = askLevel.getHead();
-                if (askOrder == null) {
-                    asks.remove(askPrice);
-                    break;
+
+                final var transactionPrice = NumberUtils.midValue(bidPrice, askPrice);
+
+                while (true) { // Move out of the loop when either bid or ask executable level is empty (No orders)
+                    log.debug("In while loop");
+                    final var bidOrder = bidLevel.getHead();
+                    if (bidOrder == null) {
+                        bids.remove(bidPrice);
+                        break;
+                    }
+                    final var askOrder = askLevel.getHead();
+                    if (askOrder == null) {
+                        asks.remove(askPrice);
+                        break;
+                    }
+                    doTransact(bidOrder, askOrder, transactionPrice, bidLevel, askLevel);
                 }
-                doTransact(bidOrder, askOrder, transactionPrice, bidLevel, askLevel);
             }
+        } catch (Exception exception) {
+            log.error("Error during transaction processing: {}", exception.getMessage(), exception);
         }
     }
 
+    // Orders at executable priceLevels
     private void doTransact(final Order bidOrder, final Order askOrder, final long transactionPrice,
                             final PriceLevel bidLevel, final PriceLevel askLevel) {
+        log.debug("Transacting bidOrder: {}, askOrder: {}, transactionPrice: {}", bidOrder, askOrder, transactionPrice);
         final var bidOrderPendingQty = bidOrder.pendingQuantities();
         final var askOrderPendingQty = askOrder.pendingQuantities();
         final Transaction bidTransaction = createTransaction(bidOrder, transactionPrice, ExecType.FILL);
@@ -170,16 +165,8 @@ public class OrderBook {
             bidOrder.updateExecutedQuantity(askOrderPendingQty);
         }
 
-        saveTransaction(bidTransaction);
-        saveTransaction(askTransaction);
-    }
-
-    private void saveTransaction(final Transaction transaction) {
-        try (DocumentContext dc = appender.writingDocument()) {
-            Objects.requireNonNull(dc.wire())
-                    .write("Transaction_v1")
-                    .object(transaction);
-        }
+        queueOperation.addTransaction(bidTransaction);
+        queueOperation.addTransaction(askTransaction);
     }
 
     private Transaction createTransaction(final Order order, final long transactionPrice, final char executionType) {
@@ -187,5 +174,13 @@ public class OrderBook {
         final var transactionTime = TimeUtils.generateInstantEpochNanoSec();
         return new Transaction(transactionId, transactionTime, order.getOrderId(),
                 transactionPrice, order.getSymbolId(), order.getBrokerId(), order.getSide(), executionType);
+    }
+
+    private ScheduledExecutorService createTransactionExecutor() {
+        return Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r);
+            t.setName("Transaction-" + this.symbolId);
+            return t;
+        });
     }
 }

@@ -14,4 +14,15 @@ public class FixUtils {
     public static long convertQtyDoubleToLong(final double qty) {
         return (long) qty;
     }
+
+    public static double convertPriceLongToDouble(final long price) {
+        if (price == 0) {
+            return 0.0;
+        }
+        return price / 10000.0;
+    }
+
+    public static double convertQtyLongToDouble(final long qty) {
+        return (double) qty;
+    }
 }

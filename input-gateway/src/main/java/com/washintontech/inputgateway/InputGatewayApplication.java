@@ -1,8 +1,7 @@
 package com.washintontech.inputgateway;
 
 import com.washintontech.inputgateway.config.ApplicationConfig;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Import;
@@ -15,10 +14,8 @@ import java.util.TimeZone;
 @SpringBootApplication
 @Import({ApplicationConfig.class})
 @EnableWebFlux
+@Log4j2
 public class InputGatewayApplication {
-
-    private static final Logger log = LogManager.getLogger(InputGatewayApplication.class);
-
     public static void main(String[] args) {
         try {
             final TimeZone jvmTimeZone = TimeZone.getTimeZone(ZoneId.of("UTC"));
@@ -27,11 +24,6 @@ public class InputGatewayApplication {
 
             final var applicationContext = SpringApplication.run(InputGatewayApplication.class, args);
             applicationContext.addApplicationListener(new ShutDownListener());
-
-//            log.info("""
-//
-//                        Matching Engine Started....        \s
-//                    """);
             log.info("Matching Engine Started.... ");
 
         } catch (Exception exception) {

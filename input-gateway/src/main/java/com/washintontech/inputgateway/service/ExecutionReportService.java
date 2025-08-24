@@ -18,7 +18,7 @@ import java.time.ZoneId;
 import java.util.UUID;
 
 import static com.washintontech.cache.model.OrderRecords.EXEC_STRING;
-import static com.washintontech.cache.model.OrderRecords.UTC_STRING;
+import static com.washintontech.common.utils.TimeUtils.UTC_STRING;
 
 @Service
 public class ExecutionReportService {

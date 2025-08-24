@@ -3,8 +3,7 @@ package com.washintontech.inputgateway.service;
 import com.washintontech.cache.service.OrderRecordService;
 import com.washintontech.matchingEngine.component.OrderBookEngine;
 import lombok.RequiredArgsConstructor;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import quickfix.FieldNotFound;
 import quickfix.fix44.ExecutionReport;
@@ -15,9 +14,9 @@ import quickfix.fix44.OrderCancelRequest;
 import static com.washintontech.matchingEngine.util.NumberUtils.generateThreadLocalRandomLong;
 
 @Service
+@Log4j2
 @RequiredArgsConstructor
 public class InboundTraderService {
-    private static final Logger log = LogManager.getLogger(InboundTraderService.class);
     private final ValidationService validationService;
     private final ComplianceService complianceService;
     private final RiskService riskService;

@@ -26,11 +26,12 @@
     <properties>
     </properties>
     <dependencies>
-        <!--        <dependency>-->
-        <!--            <groupId>com.washintontech</groupId>-->
-        <!--            <artifactId>common</artifactId>-->
-        <!--            <version>${project.parent.version}</version>-->
-        <!--        </dependency>-->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.38</version>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>com.washintontech</groupId>
             <artifactId>audit</artifactId>
@@ -46,7 +47,6 @@
             <artifactId>cache</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.jctools/jctools-core -->
         <dependency>
             <groupId>org.jctools</groupId>
             <artifactId>jctools-core</artifactId>
@@ -56,10 +56,6 @@
 
     <build>
         <plugins>
-            <!--            <plugin>-->
-            <!--                <groupId>org.springframework.boot</groupId>-->
-            <!--                <artifactId>spring-boot-maven-plugin</artifactId>-->
-            <!--            </plugin>-->
         </plugins>
     </build>
 

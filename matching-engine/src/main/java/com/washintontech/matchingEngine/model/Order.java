@@ -31,8 +31,6 @@ public final class Order implements Poolable {
     @Setter
     private AtomicLong executedQuantity;
 
-    //private ThreadPoolExecutor threadPoolExecutor;
-
     public Order(final int poolIndex) {
         this.poolIndex = poolIndex;
     }
@@ -45,6 +43,7 @@ public final class Order implements Poolable {
         this.price = FixUtils.convertPriceDoubleToLong(requestOrder.getOrdType(), requestOrder.getDouble(Price.FIELD));
         this.quantity = FixUtils.convertQtyDoubleToLong(requestOrder.getDouble(OrderQty.FIELD));
         this.side = requestOrder.getChar(Side.FIELD);
+        this.executedQuantity = new AtomicLong(0);
     }
 
     public Order enrichWithOrderCancelReplaceOrder(final OrderCancelReplaceRequest changedOrderRequest,
