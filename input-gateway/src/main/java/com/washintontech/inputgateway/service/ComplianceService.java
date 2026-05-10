@@ -6,10 +6,7 @@ import quickfix.fix44.NewOrderSingle;
 
 @Service
 public class ComplianceService {
-
-//    public void ensureCompliance(final BrokerTradeRequest req) {
-//    }
-
+    // TODO:
     public void ensureCompliance(NewOrderSingle newOrderSingle) {
 
 

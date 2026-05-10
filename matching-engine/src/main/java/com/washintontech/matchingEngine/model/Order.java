@@ -22,7 +22,6 @@ public final class Order implements Poolable {
     private long price;
     private long quantity;
     private char side;
-    //private long sequenceNumber;
     private int brokerId;
     @Setter
     private Order previous;
@@ -58,13 +57,7 @@ public final class Order implements Poolable {
         return quantity - executedQuantity.get();
     }
 
-    public void reduceQuantity(final long remaining) {
-
+    public void reduceQuantity(final long executedQty) {
+        executedQuantity.addAndGet(executedQty);
     }
-
-    public void updateExecutedQuantity(final long newQty) {
-        executedQuantity.addAndGet(newQty);
-    }
-
-
 }

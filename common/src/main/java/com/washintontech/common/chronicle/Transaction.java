@@ -17,12 +17,11 @@ public class Transaction extends SelfDescribingMarshallable {
     private final int brokerId;
     private final char side;
     private final char executionType;
-    //private final int version = 1;
 
-    private long quantity;
+    private final long quantity;
 
     public Transaction(long transactionId, long transactionTime, long orderId, long transactionPrice, int symbolId,
-                       int brokerId, char side, final char executionType) {
+                       int brokerId, char side, final char executionType, final long quantity) {
         this.transactionId = transactionId;
         this.transactionTime = transactionTime;
         this.orderId = orderId;
@@ -31,6 +30,7 @@ public class Transaction extends SelfDescribingMarshallable {
         this.symbolId = symbolId;
         this.side = side;
         this.executionType = executionType;
+        this.quantity = quantity;
     }
 
 }

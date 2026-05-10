@@ -5,7 +5,6 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Import;
-import org.springframework.web.reactive.config.EnableWebFlux;
 
 import java.time.ZoneId;
 import java.util.Locale;
@@ -13,7 +12,6 @@ import java.util.TimeZone;
 
 @SpringBootApplication
 @Import({ApplicationConfig.class})
-@EnableWebFlux
 @Log4j2
 public class InputGatewayApplication {
     public static void main(String[] args) {

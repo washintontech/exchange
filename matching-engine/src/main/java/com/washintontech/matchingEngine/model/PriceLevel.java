@@ -5,7 +5,7 @@ import lombok.Getter;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Getter
-public final class PriceLevel {
+public final class PriceLevel { // TODO: Can be reusable like OrderPool
     private final long price;
     private final AtomicLong totalQuantity;
     private volatile Order head;
@@ -16,7 +16,7 @@ public final class PriceLevel {
         this.totalQuantity = new AtomicLong();
     }
 
-    // TODO: Check for concurrency
+    // TODO: Check for concurrency in case of Hotspot
     public void add(Order order) {
         order.setNext(null);
         order.setPrevious(null);
@@ -77,23 +77,28 @@ public final class PriceLevel {
         return removed;
     }
 
-    public long executeQuantity(long quantity) {
-        long remaining = quantity;
-
-        while (remaining > 0 && head != null) {
-            Order order = head;
-            long orderQty = order.getQuantity();
-
-            if (orderQty > remaining) {
-                order.reduceQuantity(remaining);
-                totalQuantity.addAndGet(-remaining);
-                remaining = 0;
-            } else {
-                removeOldest();
-                remaining -= orderQty;
-            }
-        }
-
-        return remaining;
+    public Order getOldestOrder() {
+        if (head == null) return null;
+        return head;
     }
+
+//    public long executeQuantity(long quantity) {
+//        long remaining = quantity;
+//
+//        while (remaining > 0 && head != null) {
+//            Order order = head;
+//            long orderQty = order.getQuantity();
+//
+//            if (orderQty > remaining) {
+//                order.reduceQuantity(remaining);
+//                totalQuantity.addAndGet(-remaining);
+//                remaining = 0;
+//            } else {
+//                removeOldest();
+//                remaining -= orderQty;
+//            }
+//        }
+//
+//        return remaining;
+//    }
 }
