@@ -9,22 +9,8 @@
         <relativePath>./../pom.xml</relativePath>
     </parent>
     <artifactId>input-gateway</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
     <name>input-gateway</name>
     <description>input-gateway</description>
-    <url/>
-    <licenses>
-        <license/>
-    </licenses>
-    <developers>
-        <developer/>
-    </developers>
-    <scm>
-        <connection/>
-        <developerConnection/>
-        <tag/>
-        <url/>
-    </scm>
     <properties>
 
     </properties>

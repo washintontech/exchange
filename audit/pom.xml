@@ -9,22 +9,8 @@
         <relativePath>./../pom.xml</relativePath>
     </parent>
     <artifactId>audit</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
     <name>audit</name>
     <description>audit</description>
-    <url/>
-    <licenses>
-        <license/>
-    </licenses>
-    <developers>
-        <developer/>
-    </developers>
-    <scm>
-        <connection/>
-        <developerConnection/>
-        <tag/>
-        <url/>
-    </scm>
     <properties>
     </properties>
     <dependencies>
@@ -32,10 +18,6 @@
 
     <build>
         <plugins>
-            <!--            <plugin>-->
-            <!--                <groupId>org.springframework.boot</groupId>-->
-            <!--                <artifactId>spring-boot-maven-plugin</artifactId>-->
-            <!--            </plugin>-->
         </plugins>
     </build>
 

@@ -28,38 +28,6 @@ public class FixConfig {
     public SessionSettings sessionSettings() throws Exception {
         return new SessionSettings(Objects.requireNonNull(
                 getClass().getClassLoader().getResourceAsStream("quickfix/fix-session.cfg")));
-
-        //        var loader = getClass().getClassLoader();
-//        var url = loader.getResource("quickfix");
-//        if (url == null) {
-//            System.out.println("quickfix folder not found in classpath");
-//        } else {
-//            System.out.println("quickfix folder found: " + url);
-//        }
-
-//        InputStream is = getClass().getClassLoader().getResourceAsStream("quickfix/fix-session.cfg");
-//        System.out.println("InputStream is null? " + (is == null));
-//        if (is == null) throw new RuntimeException("fix-session.cfg not found");
-
-//        return new SessionSettings(is);
-//        System.out.println("===== Loaded FIX Sessions =====");
-//        settings.sectionIterator().forEachRemaining(System.out::println);
-//
-//        System.out.println("===== All Config Settings =====");
-//        settings.getDefaultProperties().forEach((k, v) -> System.out.println("[DEFAULT] " + k + "=" + v));
-//
-//        settings.sectionIterator().forEachRemaining(section -> {
-//            System.out.println("Section: " + section);
-//            try {
-//                settings.getSessionProperties(section).forEach((k, v) ->
-//                        System.out.println("    " + k + " = " + v)
-//                );
-//            } catch (Exception e) {
-//                System.err.println("    Failed to read section: " + section);
-//            }
-//        });
-
-//        return settings;
     }
 
     @Bean

@@ -13,12 +13,9 @@ import net.openhft.chronicle.queue.ExcerptTailer;
 import net.openhft.chronicle.wire.DocumentContext;
 import quickfix.FieldNotFound;
 import quickfix.field.Account;
-import quickfix.field.AvgPx;
 import quickfix.field.ClOrdID;
-import quickfix.field.CumQty;
 import quickfix.field.ExecID;
 import quickfix.field.ExecType;
-import quickfix.field.LeavesQty;
 import quickfix.field.OrdStatus;
 import quickfix.field.OrderID;
 import quickfix.field.OrderQty;
@@ -96,11 +93,6 @@ public class OutboundTransactionProcessor implements Runnable {
         executionReport.set(new ExecID(EXEC_STRING + UUID.randomUUID()));
         executionReport.set(new TransactTime(
                 TimeUtils.convertEpochNanoSecToLocalDateTime(transaction.getTransactionTime())));
-
-// TODO: Check need for these fields
-        executionReport.set(new LeavesQty(00.0));   // Tag 151
-        executionReport.set(new CumQty(00.0));            // Tag 14
-        executionReport.set(new AvgPx(00.0));              // Tag 6
         return executionReport;
     }
 

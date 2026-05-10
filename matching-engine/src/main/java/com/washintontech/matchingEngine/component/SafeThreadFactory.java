@@ -1,5 +1,6 @@
 package com.washintontech.matchingEngine.component;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
@@ -14,7 +15,7 @@ public class SafeThreadFactory implements ThreadFactory {
     private final ThreadPoolExecutor[] writers;
 
     @Override
-    public Thread newThread(final Runnable r) {
+    public Thread newThread(final @NonNull Runnable r) {
         Thread t = new Thread(r, THREAD_NAME_PREFIX + partitionId);
 
         t.setUncaughtExceptionHandler((thread, ex) -> {
@@ -27,9 +28,7 @@ public class SafeThreadFactory implements ThreadFactory {
     }
 
     private void restartPartition() {
-        if (!writers[partitionId].isShutdown()) {
-            return;
-        }
+        if (!writers[partitionId].isShutdown()) return;
         synchronized (writers) {
             if (!writers[partitionId].isShutdown() || !writers[partitionId].isTerminated()) {
                 return;
